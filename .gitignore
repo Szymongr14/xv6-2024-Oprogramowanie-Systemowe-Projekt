@@ -6,6 +6,7 @@ _*
 *.sym
 *.img
 vectors.S
+/.idea
 bootblock
 entryother
 initcode
