@@ -15,6 +15,7 @@
 
 struct cmd {
   int type;
+  int is_background;
 };
 
 struct execcmd {
@@ -158,6 +159,10 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+    if(buf[0] == '\n' || buf[0] == 0){
+      continue;  // Skip processing empty commands
+    }
+
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
@@ -165,6 +170,12 @@ main(void)
         fprintf(2, "cannot cd %s\n", buf+3);
       continue;
     }
+//    if(buf[strlen(buf)-2] == '&'){
+//      printf("proces w tle\n");
+//      buf[strlen(buf)-2] = '\n';
+//      buf[strlen(buf)-1] = 0;
+//    }
+
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(0);
@@ -329,15 +340,33 @@ struct cmd*
 parsecmd(char *s)
 {
   char *es;
-  struct cmd *cmd;
+  struct cmd *cmd = 0;
 
-  es = s + strlen(s);
+  // Check for '&' at the end
+  int len = strlen(s);
+  int is_background = 0;
+  if (len > 0 && s[len - 2] == '&') {
+    printf("proces w tle\n");
+    s[len - 2] = '\n'; // Replace '&' with newline
+    s[len - 2] = 0;    // Null-terminate the string
+    is_background = 1; // Mark as background
+  }
+
+  es = s + strlen(s); // End of the input string
+
+  // Parse the command
   cmd = parseline(&s, es);
+
+  // Set the is_background flag in the parsed command
+  cmd->is_background = is_background;
+
+  // Check for leftover characters after parsing
   peek(&s, es, "");
-  if(s != es){
+  if (s != es) {
     fprintf(2, "leftovers: %s\n", s);
     panic("syntax");
   }
+
   nulterminate(cmd);
   return cmd;
 }
