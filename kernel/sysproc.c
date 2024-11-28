@@ -91,3 +91,15 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+uint64
+sys_ps(void)
+{
+    struct proc *p;
+    for(p = proc; p < &proc[NPROC]; p++) {
+        if(p->state != UNUSED) {
+            printf("PID: %d, State: %d, Name: %s, Is_background: %d \n", p->pid, p->state, p->name, p->is_background);
+        }
+    }
+    return 0;
+
+}
