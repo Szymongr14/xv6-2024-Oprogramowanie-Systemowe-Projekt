@@ -342,6 +342,7 @@ parsecmd(char *s)
   char *es;
   struct cmd *cmd = 0;
 
+
   // Check for '&' at the end
   int len = strlen(s);
   int is_background = 0;
@@ -353,6 +354,11 @@ parsecmd(char *s)
   }
 
   es = s + strlen(s); // End of the input string
+
+  if (strcmp(s, "jobs\n") == 0) {
+      getjobs();
+      return 0;
+}
 
   // Parse the command
   cmd = parseline(&s, es);

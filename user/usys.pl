@@ -37,3 +37,6 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("ps");
+entry("bg");
+entry("fg");
+entry("getjobs");

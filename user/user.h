@@ -23,6 +23,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int ps(void);
+int fg(int);
+int bg(int);
+int getjobs(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

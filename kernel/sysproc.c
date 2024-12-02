@@ -103,3 +103,23 @@ sys_ps(void)
     return 0;
 
 }
+
+uint64 sys_getjobs(void) {
+  return getjobs();
+}
+
+uint64 sys_bg(void) {
+  int pgid;
+  argint(0, &pgid);
+  if (pgid < 0)
+    return -1;
+  return bg(pgid);
+}
+
+uint64 sys_fg(void) {
+  int pgid;
+  argint(0, &pgid);
+  if (pgid < 0)
+    return -1;
+  return fg(pgid);
+}
