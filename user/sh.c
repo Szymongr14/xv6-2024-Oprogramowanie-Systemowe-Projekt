@@ -15,7 +15,6 @@
 
 struct cmd {
   int type;
-  int is_background;
 };
 
 struct execcmd {
@@ -123,10 +122,11 @@ runcmd(struct cmd *cmd)
     wait(0);
     break;
 
-  case BACK:
-    bcmd = (struct backcmd*)cmd;
-    if(fork1() == 0)
-      runcmd(bcmd->cmd);
+    case BACK:
+        bcmd = (struct backcmd*)cmd;
+        if (fork1() == 0) {
+          runcmd(bcmd->cmd);  // Execute the background command
+        }
     break;
   }
   exit(0);
@@ -170,11 +170,6 @@ main(void)
         fprintf(2, "cannot cd %s\n", buf+3);
       continue;
     }
-//    if(buf[strlen(buf)-2] == '&'){
-//      printf("proces w tle\n");
-//      buf[strlen(buf)-2] = '\n';
-//      buf[strlen(buf)-1] = 0;
-//    }
 
     if(fork1() == 0)
       runcmd(parsecmd(buf));
@@ -358,13 +353,15 @@ parsecmd(char *s)
   if (strcmp(s, "jobs\n") == 0) {
       getjobs();
       return 0;
-}
+  }
 
   // Parse the command
   cmd = parseline(&s, es);
 
-  // Set the is_background flag in the parsed command
-  cmd->is_background = is_background;
+  // If it's a background command, set the type to BACK
+  if (cmd != 0 && is_background) {
+    cmd = backcmd(cmd);  // Wrap the command as BACK type
+  }
 
   // Check for leftover characters after parsing
   peek(&s, es, "");
