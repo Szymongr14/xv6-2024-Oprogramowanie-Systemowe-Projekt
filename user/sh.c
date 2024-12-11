@@ -12,6 +12,18 @@
 #define BACK  5
 
 #define MAXARGS 10
+#define MAXJOBS 16
+
+
+struct job {
+  int job_id;          // Unique ID for the job
+  int pid;             // Process ID
+  char cmd[100];       // Command string
+  int is_running;      // 1 if running, 0 if stopped
+};
+
+struct job jobs_list[MAXJOBS]; // List of jobs
+int job_count = 0;         // Global job counter
 
 struct cmd {
   int type;
@@ -53,6 +65,8 @@ int fork1(void);  // Fork but panics on failure.
 void panic(char*);
 struct cmd *parsecmd(char*);
 void runcmd(struct cmd*) __attribute__((noreturn));
+void get_jobs();
+void add_job(int pid, struct cmd* cmd);
 
 // Execute cmd.  Never returns.
 void
@@ -123,10 +137,10 @@ runcmd(struct cmd *cmd)
     break;
 
     case BACK:
-        bcmd = (struct backcmd*)cmd;
-        if (fork1() == 0) {
-          runcmd(bcmd->cmd);  // Execute the background command
-        }
+    bcmd = (struct backcmd*)cmd;
+    if (fork1() == 0) {
+        runcmd(bcmd->cmd);
+    }
     break;
   }
   exit(0);
@@ -171,9 +185,23 @@ main(void)
       continue;
     }
 
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
-    wait(0);
+    if (strcmp(buf, "jobs\n") == 0) {
+        get_jobs();  // Parent handles 'jobs'
+        continue;
+    }
+
+    // Handle commands
+    int pid = fork1();
+    if (pid == 0) {
+        // Child executes the command
+        runcmd(parsecmd(buf));
+    } else {
+        // Parent adds background jobs
+        if (buf[strlen(buf) - 2] == '&') {
+            add_job(pid, parsecmd(buf));
+        }
+        wait(0);  // Wait for the foreground process
+    }
   }
   exit(0);
 }
@@ -337,31 +365,15 @@ parsecmd(char *s)
   char *es;
   struct cmd *cmd = 0;
 
-
-  // Check for '&' at the end
-  int len = strlen(s);
-  int is_background = 0;
-  if (len > 0 && s[len - 2] == '&') {
-    printf("proces w tle\n");
-    s[len - 2] = '\n'; // Replace '&' with newline
-    s[len - 2] = 0;    // Null-terminate the string
-    is_background = 1; // Mark as background
-  }
-
   es = s + strlen(s); // End of the input string
 
   if (strcmp(s, "jobs\n") == 0) {
-      getjobs();
+      get_jobs();
       return 0;
   }
 
   // Parse the command
   cmd = parseline(&s, es);
-
-  // If it's a background command, set the type to BACK
-  if (cmd != 0 && is_background) {
-    cmd = backcmd(cmd);  // Wrap the command as BACK type
-  }
 
   // Check for leftover characters after parsing
   peek(&s, es, "");
@@ -523,4 +535,42 @@ nulterminate(struct cmd *cmd)
     break;
   }
   return cmd;
+}
+
+void
+add_job(int pid, struct cmd* cmd){
+    if (job_count >= MAXJOBS) {
+        fprintf(2, "Job list is full\n");
+        return;
+    }
+    struct job *new_job = &jobs_list[job_count];
+    new_job->job_id = job_count + 1; // Assign job_id before incrementing job_count
+    new_job->pid = pid;
+    new_job->is_running = 1;
+    struct execcmd* ecmd = (struct execcmd*)cmd;
+    strcpy(new_job->cmd, ecmd->argv[0]);
+    job_count++; // Increment job_count after assigning job_id
+}
+
+void
+get_jobs(){
+    for (int i = 0; i < job_count; i++) {
+        struct job *job = &jobs_list[i];
+        if (job->is_running) {
+          printf("[%d] %s (running)\n", job->job_id, job->cmd);
+        } else {
+          printf("[%d] %s (stopped)\n", job->job_id, job->cmd);
+        }
+      }
+}
+
+int is_process_alive(int pid) {
+    // Send signal 0 to the process
+    if (kill(pid) == 0) {
+        // Process exists
+        return 1;
+    } else {
+        // Process does not exist or we don't have permission
+        return 0;
+    }
 }
