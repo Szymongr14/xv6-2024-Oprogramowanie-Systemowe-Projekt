@@ -97,7 +97,7 @@ sys_ps(void)
     struct proc *p;
     for(p = proc; p < &proc[NPROC]; p++) {
         if(p->state != UNUSED) {
-            printf("PID: %d, State: %d, Name: %s, Is_background: %d \n", p->pid, p->state, p->name, p->is_background);
+            printf("PID: %d, State: %d, Name: %s \n", p->pid, p->state, p->name);
         }
     }
     return 0;

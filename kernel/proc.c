@@ -785,7 +785,8 @@ is_alive(int pid)
     struct proc *p;
 
     for (p = proc; p < &proc[NPROC]; p++) {
-        if (p->pid == pid && p->state != UNUSED && p->state != ZOMBIE) {
+//      printf("PID: %d, State: %d, Name: %s \n", p->pid, p->state, p->name);
+        if (p->pid == pid) {
             return 1; // Process is alive
         }
     }

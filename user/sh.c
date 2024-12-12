@@ -202,7 +202,7 @@ main(void)
     } else {
         // Parent adds background jobs
         if (buf[strlen(buf) - 2] == '&') {
-            add_job(pid, parsecmd(buf));
+            add_job(pid+1, parsecmd(buf));
         }
         wait(0);  // Wait for the foreground process
     }
