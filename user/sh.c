@@ -67,6 +67,7 @@ struct cmd *parsecmd(char*);
 void runcmd(struct cmd*) __attribute__((noreturn));
 void get_jobs();
 void add_job(int pid, struct cmd* cmd);
+void check_and_remove_finished_jobs();
 
 // Execute cmd.  Never returns.
 void
@@ -173,6 +174,9 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+
+    check_and_remove_finished_jobs();
+
     if(buf[0] == '\n' || buf[0] == 0){
       continue;  // Skip processing empty commands
     }
@@ -540,7 +544,7 @@ nulterminate(struct cmd *cmd)
 void
 add_job(int pid, struct cmd* cmd){
     if (job_count >= MAXJOBS) {
-        fprintf(2, "Job list is full\n");
+        printf("Job list is full\n");
         return;
     }
     struct job *new_job = &jobs_list[job_count];
@@ -550,6 +554,7 @@ add_job(int pid, struct cmd* cmd){
     struct execcmd* ecmd = (struct execcmd*)cmd;
     strcpy(new_job->cmd, ecmd->argv[0]);
     job_count++; // Increment job_count after assigning job_id
+    printf("[%d] %d\n", new_job->job_id, new_job->pid);
 }
 
 void
@@ -564,7 +569,8 @@ get_jobs(){
       }
 }
 
-int is_process_alive(int pid) {
+int
+is_process_alive(int pid) {
     // Send signal 0 to the process
     if (kill(pid) == 0) {
         // Process exists
@@ -572,5 +578,25 @@ int is_process_alive(int pid) {
     } else {
         // Process does not exist or we don't have permission
         return 0;
+    }
+}
+
+void
+check_and_remove_finished_jobs() {
+    for (int i = 0; i < job_count; i++) {
+        struct job *job = &jobs_list[i];
+
+        // Check if the job is still running
+        if (!is_alive(job->pid)) {  // Use the is_alive syscall
+            printf("Job [%d] %s has finished.\n", job->job_id, job->cmd);
+
+            // Shift remaining jobs in the list to fill the gap
+            for (int j = i; j < job_count - 1; j++) {
+                jobs_list[j] = jobs_list[j + 1];
+            }
+
+            job_count--;  // Decrease the job count
+            i--;          // Recheck the current index after shifting
+        }
     }
 }

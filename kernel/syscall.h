@@ -24,3 +24,4 @@
 #define SYS_bg     23
 #define SYS_fg     24
 #define SYS_getjobs 25
+#define SYS_is_alive 26

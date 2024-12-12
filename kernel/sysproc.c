@@ -123,3 +123,13 @@ uint64 sys_fg(void) {
     return -1;
   return fg(pgid);
 }
+
+int
+sys_is_alive(void)
+{
+  int pid;
+  argint(0, &pid);
+  if (pid < 0)
+    return -1;
+  return is_alive(pid);
+}

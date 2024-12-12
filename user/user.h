@@ -26,6 +26,7 @@ int ps(void);
 int fg(int);
 int bg(int);
 int getjobs(void);
+int is_alive(int pid);
 
 // ulib.c
 int stat(const char*, struct stat*);

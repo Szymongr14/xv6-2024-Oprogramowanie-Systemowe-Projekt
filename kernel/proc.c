@@ -777,3 +777,17 @@ procdump(void)
     printf("\n");
   }
 }
+
+
+int
+is_alive(int pid)
+{
+    struct proc *p;
+
+    for (p = proc; p < &proc[NPROC]; p++) {
+        if (p->pid == pid && p->state != UNUSED && p->state != ZOMBIE) {
+            return 1; // Process is alive
+        }
+    }
+    return 0; // Process is not alive
+}

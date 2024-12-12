@@ -112,7 +112,7 @@ void            signal_pgid(int pgid, int signum);
 int             fg(int);
 int             bg(int);
 int             getjobs(void);
-
+int             is_alive(int);
 
 
 // swtch.S
