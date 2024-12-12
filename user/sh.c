@@ -24,6 +24,7 @@ struct job {
 
 struct job jobs_list[MAXJOBS]; // List of jobs
 int job_count = 0;         // Global job counter
+int fg_pid = -1;  // -1 means no foreground process
 
 struct cmd {
   int type;
@@ -91,6 +92,7 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit(1);
+
     exec(ecmd->argv[0], ecmd->argv);
     fprintf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
@@ -203,8 +205,11 @@ main(void)
         // Parent adds background jobs
         if (buf[strlen(buf) - 2] == '&') {
             add_job(pid+1, parsecmd(buf));
+            setfgpid(-1);
         }
+        setfgpid(pid+1);
         wait(0);  // Wait for the foreground process
+        setfgpid(-1);
     }
   }
   exit(0);

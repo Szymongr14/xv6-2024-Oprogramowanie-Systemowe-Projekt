@@ -106,7 +106,7 @@ extern uint64 sys_bg(void);
 extern uint64 sys_fg(void);
 extern uint64 sys_getjobs(void);
 extern uint64 sys_is_alive(void);
-
+extern uint64 sys_setfgpid(void);
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
 static uint64 (*syscalls[])(void) = {
@@ -135,7 +135,8 @@ static uint64 (*syscalls[])(void) = {
 [SYS_bg]      sys_bg,
 [SYS_fg]      sys_fg,
 [SYS_getjobs] sys_getjobs,
-[SYS_is_alive] sys_is_alive
+[SYS_is_alive] sys_is_alive,
+[SYS_setfgpid] sys_setfgpid
 };
 
 void

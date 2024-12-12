@@ -41,3 +41,4 @@ entry("bg");
 entry("fg");
 entry("getjobs");
 entry("is_alive");
+entry("setfgpid");

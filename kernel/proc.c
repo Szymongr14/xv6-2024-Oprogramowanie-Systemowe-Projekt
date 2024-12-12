@@ -14,6 +14,7 @@ struct proc *initproc;
 
 int nextpid = 1;
 struct spinlock pid_lock;
+int fg_pid = -1;  // Default value indicating no foreground process
 
 extern void forkret(void);
 static void freeproc(struct proc *p);

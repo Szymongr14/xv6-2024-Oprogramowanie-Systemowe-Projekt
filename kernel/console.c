@@ -24,6 +24,7 @@
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x
+extern int fg_pid;
 
 //
 // send one character to the uart.
@@ -135,12 +136,22 @@ consoleread(int user_dst, uint64 dst, int n)
 void
 consoleintr(int c)
 {
+  int ctrlc = 0;
+  int ctrlz = 0;
   acquire(&cons.lock);
 
   switch(c){
   case C('P'):  // Print process list.
     procdump();
     break;
+  case C('C'):{
+     ctrlc=1;
+    break;
+  }
+  case C('Z'):{
+     ctrlz=1;
+    break;
+  }
   case C('U'):  // Kill line.
     while(cons.e != cons.w &&
           cons.buf[(cons.e-1) % INPUT_BUF_SIZE] != '\n'){
@@ -176,6 +187,50 @@ consoleintr(int c)
   }
   
   release(&cons.lock);
+
+  if(ctrlc){
+    consputc('C');
+    consputc('t');
+    consputc('r');
+    consputc('l');
+    consputc('+');
+    consputc('C');
+    consputc(' ');
+    consputc('p');
+    consputc('r');
+    consputc('e');
+    consputc('s');
+    consputc('s');
+    consputc('e');
+    consputc('d');
+    consputc('\n');
+
+      struct proc *p;
+      for(p = proc; p < &proc[NPROC]; p++) {
+        if(p->pid != 1 && p->pid != 2 ){
+          p->killed=1;
+          kill(fg_pid);  // Send a kill signal to the process
+          break;
+          }
+        }
+      }
+
+  if(ctrlz){
+    consputc('^');
+    consputc('Z');
+    consputc('\n');
+
+    // Send stop signal to the foreground process
+      struct proc *p;
+      for (p = proc; p < &proc[NPROC]; p++) {
+        if (p->pid == fg_pid) {
+          p->state = SLEEPING;  // Mark the process as stopped
+          p->jobstate = STOPPED;  // Update job state (if you have it)
+          break;
+        }
+      }
+      fg_pid = -1;  // Clear the foreground process
+    }
 }
 
 void

@@ -27,6 +27,7 @@ struct cpu {
 };
 
 extern struct cpu cpus[NCPU];
+extern int fg_pid;
 
 // per-process data for the trap handling code in trampoline.S.
 // sits in a page by itself just under the trampoline page in the
@@ -94,7 +95,7 @@ struct proc {
   int pid;                     // Process ID
   int is_background;           // Is process running in the background
   int pgid;                    // Process Group ID
-  enum jobstate jobstate;      // Current state of the job
+      enum jobstate jobstate;      // Current state of the job
 
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process

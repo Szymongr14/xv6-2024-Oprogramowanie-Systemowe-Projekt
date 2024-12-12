@@ -25,3 +25,4 @@
 #define SYS_fg     24
 #define SYS_getjobs 25
 #define SYS_is_alive 26
+#define SYS_setfgpid 27
