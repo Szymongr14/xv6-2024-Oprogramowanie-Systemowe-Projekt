@@ -214,21 +214,34 @@ consoleintr(int c)
      }
   }
 
-  if(ctrlz){
+if (ctrlz) {
+    struct proc *p;
+
     consputc('^');
     consputc('Z');
     consputc('\n');
 
-    // Send stop signal to the foreground process
-      struct proc *p;
-      for (p = proc; p < &proc[NPROC]; p++) {
+    // Stop the foreground process using fg_pid
+    for (p = proc; p < &proc[NPROC]; p++) {
         if (p->pid == fg_pid) {
-          p->state = SLEEPING;  // Mark the process as stopped
-          break;
+            acquire(&p->lock);
+            p->state = STOPPED;  // Mark as stopped
+            release(&p->lock);
+            fg_pid = -1;  // Clear the foreground process
+            break;
         }
-      }
-      fg_pid = -1;  // Clear the foreground process
     }
+
+    // Wake up the shell process explicitly (pid 2)
+    for (p = proc; p < &proc[NPROC]; p++) {
+        if (p->pid == 2) {  // Shell process has pid 2
+            acquire(&p->lock);
+            p->state = RUNNABLE;  // Make shell process runnable
+            release(&p->lock);
+            break;
+        }
+    }
+}
 }
 
 void

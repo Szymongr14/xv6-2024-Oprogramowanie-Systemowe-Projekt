@@ -642,20 +642,6 @@ kill(int pid)
   return -1;
 }
 
-int bg(int pgid) {
-
-  return -1; // Job not found or not stopped
-}
-
-int fg(int pgid) {
-
-  return -1; // Job not found
-}
-
-int getjobs(void) {
-  return 0;
-}
-
 
 void
 setkilled(struct proc *p)
@@ -749,4 +735,45 @@ is_alive(int pid)
         }
     }
     return 0; // Process is not alive
+}
+
+int waitpid(int pid, int *status) {
+    struct proc *p;
+    int found = 0;
+
+    acquire(&wait_lock);
+
+    for (;;) {
+        for (p = proc; p < &proc[NPROC]; p++) {
+            if (p->pid == pid) {
+                found = 1; // Found the target process
+                printf("Found the target process PID: %d\n", pid);
+                acquire(&p->lock);
+                if (p->state == ZOMBIE) {
+                    printf("Process is in ZOMBIE state\n");
+                    // Process has exited
+                    int exit_status = p->xstate;
+                    if (status != 0) {
+                        if (copyout(myproc()->pagetable, (uint64)status, (char *)&exit_status, sizeof(int)) < 0) {
+                            release(&p->lock);
+                            release(&wait_lock);
+                            return -1; // Copyout failed
+                        }
+                    }
+                    freeproc(p); // Free process resources
+                    release(&p->lock);
+                    release(&wait_lock);
+                    return pid; // Return the pid of the terminated process
+                }
+                release(&p->lock);
+            }
+        }
+
+        if (!found || killed(myproc())) {
+            release(&wait_lock);
+            return -1; // No such process or calling process is killed
+        }
+
+        sleep(myproc(), &wait_lock); // Wait for process state change
+    }
 }

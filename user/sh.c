@@ -69,6 +69,7 @@ void runcmd(struct cmd*) __attribute__((noreturn));
 void get_jobs();
 void add_job(int pid, struct cmd* cmd);
 void check_and_remove_finished_jobs();
+void fg(int pid);
 
 // Execute cmd.  Never returns.
 void
@@ -189,6 +190,12 @@ main(void)
       if(chdir(buf+3) < 0)
         fprintf(2, "cannot cd %s\n", buf+3);
       continue;
+    }
+
+    if (strncmp(buf, "fg", 2) == 0) {
+        int job_id = atoi(buf + 3);  // Extract job ID
+        fg(job_id);
+        continue;
     }
 
     if (strcmp(buf, "jobs\n") == 0) {
@@ -605,4 +612,29 @@ check_and_remove_finished_jobs() {
             i--;          // Recheck the current index after shifting
         }
     }
+}
+
+struct job * get_job_by_id(int job_id) {
+    for (int i = 0; i < job_count; i++) {
+        if (jobs_list[i].job_id == job_id) {
+            return &jobs_list[i];
+        }
+    }
+    return 0;
+}
+
+void fg(int job_id) {
+    struct job *job = get_job_by_id(job_id); // Find the job by its ID
+    if (!job) {
+        printf("fg: No such job\n");
+        return;
+    }
+
+    printf("Bringing job [%d] to foreground\n", job_id);
+
+    fg_pid = job->pid; // Set the foreground process ID
+    waitpid(job->pid, 0); // Wait for the process to finish
+
+    fg_pid = -1; // Reset foreground process ID
+    printf("Job [%d] finished\n", job_id);
 }

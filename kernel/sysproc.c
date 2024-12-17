@@ -104,26 +104,6 @@ sys_ps(void)
 
 }
 
-uint64 sys_getjobs(void) {
-  return getjobs();
-}
-
-uint64 sys_bg(void) {
-  int pgid;
-  argint(0, &pgid);
-  if (pgid < 0)
-    return -1;
-  return bg(pgid);
-}
-
-uint64 sys_fg(void) {
-  int pgid;
-  argint(0, &pgid);
-  if (pgid < 0)
-    return -1;
-  return fg(pgid);
-}
-
 int
 sys_is_alive(void)
 {
@@ -141,4 +121,15 @@ sys_setfgpid(void)
   argint(0, &pid);
   fg_pid = pid;  // Update the global foreground process ID
   return 0;      // Return success
+}
+
+uint64
+sys_waitpid(void) {
+  int pid;
+  uint64 status;
+
+  argint(0, &pid);
+  argaddr(1, &status);
+
+  return waitpid(pid, (int *)status);
 }

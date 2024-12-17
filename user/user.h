@@ -23,11 +23,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int ps(void);
-int fg(int);
-int bg(int);
-int getjobs(void);
 int is_alive(int pid);
 int setfgpid(int pid);
+int waitpid(int, int *);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -35,6 +33,7 @@ char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, unsigned int);
 void fprintf(int, const char*, ...) __attribute__ ((format (printf, 2, 3)));
 void printf(const char*, ...) __attribute__ ((format (printf, 1, 2)));
 char* gets(char*, int max);
