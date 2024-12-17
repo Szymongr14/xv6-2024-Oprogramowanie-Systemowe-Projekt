@@ -206,8 +206,9 @@ main(void)
         if (buf[strlen(buf) - 2] == '&') {
             add_job(pid+1, parsecmd(buf));
             setfgpid(-1);
+        }else{
+            setfgpid(pid);
         }
-        setfgpid(pid);
         wait(0);  // Wait for the foreground process
         setfgpid(-1);
     }

@@ -80,8 +80,7 @@ struct trapframe {
   /* 280 */ uint64 t6;
 };
 
-enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-enum jobstate { JRUNNING, STOPPED, COMPLETED };
+enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE, STOPPED };
 
 // Per-process state
 struct proc {
@@ -95,7 +94,6 @@ struct proc {
   int pid;                     // Process ID
   int is_background;           // Is process running in the background
   int pgid;                    // Process Group ID
-      enum jobstate jobstate;      // Current state of the job
 
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process

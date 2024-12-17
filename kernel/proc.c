@@ -171,7 +171,6 @@ freeproc(struct proc *p)
   p->xstate = 0;
   p->state = UNUSED;
   p->pgid = 0;                  // Clear process group ID
-  p->jobstate = JRUNNING;        // Reset job state
   p->is_background = 0;         // Reset background flag
 }
 
@@ -321,7 +320,6 @@ fork(void)
   acquire(&wait_lock);
   np->parent = p;
   np->pgid = p->pgid;           // Inherit parent's process group ID
-  np->jobstate = JRUNNING;       // Start in the RUNNING state
   np->is_background = 0;        // Default to foreground
   release(&wait_lock);
 
@@ -464,7 +462,7 @@ scheduler(void)
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE && p->jobstate != STOPPED) {
+      if(p->state == RUNNABLE) {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
@@ -502,10 +500,8 @@ void signal_pgid(int pgid, int signum) {
     if(p->pgid == pgid) {
       if(signum == JSTOP) {
         p->state = SLEEPING;
-        p->jobstate = STOPPED; // Mark as stopped
       } else if(signum == JCONT) {
         p->state = RUNNABLE;
-        p->jobstate = JRUNNING; // Mark as running
       }
     }
   }
@@ -647,55 +643,16 @@ kill(int pid)
 }
 
 int bg(int pgid) {
-  struct proc *job;
-  for (job = proc; job < &proc[NPROC]; job++) {
-    if (job->pgid == pgid && job->jobstate == STOPPED) {
-      job->state = RUNNABLE;    // Mark as runnable
-      job->jobstate = JRUNNING;  // Mark as running
-      return 0;
-    }
-  }
+
   return -1; // Job not found or not stopped
 }
 
 int fg(int pgid) {
-  struct proc *job;
 
-  for (job = proc; job < &proc[NPROC]; job++) {
-    if (job->pgid == pgid) {
-      job->is_background = 0;  // Mark job as foreground
-      job->state = RUNNABLE;  // Make job runnable
-      job->jobstate = JRUNNING;
-      while (job->state != UNUSED && job->jobstate == JRUNNING) {
-        sleep(job, &job->lock); // Wait until the job finishes or stops
-      }
-      return 0;
-    }
-  }
   return -1; // Job not found
 }
 
 int getjobs(void) {
-  struct proc *p = myproc();
-  struct proc *job;
-  int job_id = 0;
-
-  for (job = proc; job < &proc[NPROC]; job++) {
-    // Exclude the current shell process and irrelevant entries
-    if (job->pgid == p->pgid &&
-        job->is_background) {      // Include only background processes
-      job_id++; // Increment the job counter
-      printf("[%d] %s (%s)\n",
-             job_id,
-             job->name,
-             (job->jobstate == JRUNNING) ? "Running" : "Stopped");
-        }
-  }
-
-  if (job_id == 0) {
-    printf("No active jobs.\n");
-  }
-
   return 0;
 }
 

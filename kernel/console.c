@@ -189,31 +189,30 @@ consoleintr(int c)
   release(&cons.lock);
 
   if(ctrlc){
-    consputc('C');
-    consputc('t');
-    consputc('r');
-    consputc('l');
-    consputc('+');
-    consputc('C');
-    consputc(' ');
-    consputc('p');
-    consputc('r');
-    consputc('e');
-    consputc('s');
-    consputc('s');
-    consputc('e');
-    consputc('d');
-    consputc('\n');
-
       struct proc *p;
       for(p = proc; p < &proc[NPROC]; p++) {
         if(p->pid == fg_pid){
+            consputc('C');
+            consputc('t');
+            consputc('r');
+            consputc('l');
+            consputc('+');
+            consputc('C');
+            consputc(' ');
+            consputc('p');
+            consputc('r');
+            consputc('e');
+            consputc('s');
+            consputc('s');
+            consputc('e');
+            consputc('d');
+            consputc('\n');
           p->killed=1;
           kill(fg_pid);  // Send a kill signal to the process
           break;
-          }
         }
-      }
+     }
+  }
 
   if(ctrlz){
     consputc('^');
@@ -225,7 +224,6 @@ consoleintr(int c)
       for (p = proc; p < &proc[NPROC]; p++) {
         if (p->pid == fg_pid) {
           p->state = SLEEPING;  // Mark the process as stopped
-          p->jobstate = STOPPED;  // Update job state (if you have it)
           break;
         }
       }
