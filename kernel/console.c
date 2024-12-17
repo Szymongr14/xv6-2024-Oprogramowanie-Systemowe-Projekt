@@ -192,21 +192,9 @@ consoleintr(int c)
       struct proc *p;
       for(p = proc; p < &proc[NPROC]; p++) {
         if(p->pid == fg_pid){
-            consputc('C');
-            consputc('t');
-            consputc('r');
-            consputc('l');
-            consputc('+');
-            consputc('C');
-            consputc(' ');
-            consputc('p');
-            consputc('r');
-            consputc('e');
-            consputc('s');
-            consputc('s');
-            consputc('e');
-            consputc('d');
-            consputc('\n');
+        consputc('^');
+        consputc('C');
+        consputc('\n');
           p->killed=1;
           kill(fg_pid);  // Send a kill signal to the process
           break;
@@ -215,32 +203,32 @@ consoleintr(int c)
   }
 
 if (ctrlz) {
-    struct proc *p;
-
-    consputc('^');
-    consputc('Z');
-    consputc('\n');
-
-    // Stop the foreground process using fg_pid
-    for (p = proc; p < &proc[NPROC]; p++) {
-        if (p->pid == fg_pid) {
-            acquire(&p->lock);
-            p->state = STOPPED;  // Mark as stopped
-            release(&p->lock);
-            fg_pid = -1;  // Clear the foreground process
-            break;
-        }
-    }
-
-    // Wake up the shell process explicitly (pid 2)
-    for (p = proc; p < &proc[NPROC]; p++) {
-        if (p->pid == 2) {  // Shell process has pid 2
-            acquire(&p->lock);
-            p->state = RUNNABLE;  // Make shell process runnable
-            release(&p->lock);
-            break;
-        }
-    }
+//    struct proc *p;
+//
+//    consputc('^');
+//    consputc('Z');
+//    consputc('\n');
+//
+//    // Stop the foreground process using fg_pid
+//    for (p = proc; p < &proc[NPROC]; p++) {
+//        if (p->pid == fg_pid) {
+//            acquire(&p->lock);
+//            p->state = STOPPED;  // Mark as stopped
+//            release(&p->lock);
+//            fg_pid = -1;  // Clear the foreground process
+//            break;
+//        }
+//    }
+//
+//    // Wake up the shell process explicitly (pid 2)
+//    for (p = proc; p < &proc[NPROC]; p++) {
+//        if (p->pid == 2) {  // Shell process has pid 2
+//            acquire(&p->lock);
+//            p->state = RUNNABLE;  // Make shell process runnable
+//            release(&p->lock);
+//            break;
+//        }
+//    }
 }
 }
 

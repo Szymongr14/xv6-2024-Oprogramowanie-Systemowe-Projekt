@@ -70,6 +70,9 @@ void get_jobs();
 void add_job(int pid, const char* cmd_str);
 void check_and_remove_finished_jobs();
 void fg(int pid);
+void wait_for_job(int pid);
+void remove_job_from_list(int job_id);
+int get_first_job_id();
 
 // Execute cmd.  Never returns.
 void
@@ -206,7 +209,10 @@ main(void)
     }
 
     if (strncmp(buf, "fg", 2) == 0) {
-        int job_id = atoi(buf + 3);  // Extract job ID
+        int job_id = atoi(buf + 3);
+        if(job_id == 0){
+          job_id = get_first_job_id();
+          }
         fg(job_id);
         continue;
     }
@@ -237,6 +243,17 @@ main(void)
     }
   }
   exit(0);
+}
+
+int
+get_first_job_id() {
+    int i;
+    for (i = 0; i < MAXJOBS; i++) {
+        if (jobs_list[i].pid != 0) {
+            return jobs_list[i].job_id;
+        }
+    }
+    return -1;
 }
 
 void
@@ -599,12 +616,9 @@ get_jobs(){
 
 int
 is_process_alive(int pid) {
-    // Send signal 0 to the process
     if (kill(pid) == 0) {
-        // Process exists
         return 1;
     } else {
-        // Process does not exist or we don't have permission
         return 0;
     }
 }
@@ -614,17 +628,23 @@ check_and_remove_finished_jobs() {
     for (int i = 0; i < job_count; i++) {
         struct job *job = &jobs_list[i];
 
-        // Check if the job is still running
-        if (!is_alive(job->pid)) {  // Use the is_alive syscall
+        if (!is_alive(job->pid)) {
             printf("Job [%d] %s has finished.\n", job->job_id, job->cmd);
 
-            // Shift remaining jobs in the list to fill the gap
+           remove_job_from_list(job->job_id);
+        }
+    }
+}
+
+void
+remove_job_from_list(int job_id) {
+    for (int i = 0; i < job_count; i++) {
+        if (jobs_list[i].job_id == job_id) {
             for (int j = i; j < job_count - 1; j++) {
                 jobs_list[j] = jobs_list[j + 1];
             }
-
-            job_count--;  // Decrease the job count
-            i--;          // Recheck the current index after shifting
+            job_count--;
+            return;
         }
     }
 }
@@ -639,17 +659,26 @@ struct job * get_job_by_id(int job_id) {
 }
 
 void fg(int job_id) {
-    struct job *job = get_job_by_id(job_id); // Find the job by its ID
+    struct job *job = get_job_by_id(job_id);
     if (!job) {
         printf("fg: No such job\n");
         return;
     }
 
-    printf("Bringing job [%d] to foreground\n", job_id);
+    int len = strlen(job->cmd);
+    if (len > 0 && job->cmd[len - 1] == '&') {
+        job->cmd[len - 1] = '\0';
+    }
 
-    fg_pid = job->pid; // Set the foreground process ID
-    waitpid(job->pid, 0); // Wait for the process to finish
+    printf("%s\n", job->cmd);
+    setfgpid(job->pid);
+    wait_for_job(job->pid);
+    setfgpid(-1);
+    remove_job_from_list(job_id);
+}
 
-    fg_pid = -1; // Reset foreground process ID
-    printf("Job [%d] finished\n", job_id);
+void wait_for_job(int pid) {
+    while (is_alive(pid)) {
+        sleep(1);
+    }
 }
