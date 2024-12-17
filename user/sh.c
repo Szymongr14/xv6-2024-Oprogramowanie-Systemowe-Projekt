@@ -67,7 +67,7 @@ void panic(char*);
 struct cmd *parsecmd(char*);
 void runcmd(struct cmd*) __attribute__((noreturn));
 void get_jobs();
-void add_job(int pid, struct cmd* cmd);
+void add_job(int pid, const char* cmd_str);
 void check_and_remove_finished_jobs();
 void fg(int pid);
 
@@ -160,6 +160,19 @@ getcmd(char *buf, int nbuf)
     return -1;
   return 0;
 }
+int
+is_space(char c) {
+    return (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f');
+}
+void
+trim_trailing_spaces(char *str) {
+    int len = strlen(str);
+    while (len > 0 && is_space((unsigned char)str[len - 1])) {
+        str[len - 1] = '\0';
+        len--;
+    }
+}
+
 
 int
 main(void)
@@ -211,7 +224,10 @@ main(void)
     } else {
         // Parent adds background jobs
         if (buf[strlen(buf) - 2] == '&') {
-            add_job(pid+1, parsecmd(buf));
+            char buf_copy[100];
+            strcpy(buf_copy, buf);
+            trim_trailing_spaces(buf_copy);
+            add_job(pid+1, buf_copy);
             setfgpid(-1);
         }else{
             setfgpid(pid);
@@ -555,18 +571,17 @@ nulterminate(struct cmd *cmd)
 }
 
 void
-add_job(int pid, struct cmd* cmd){
+add_job(int pid, const char* cmd_str) {
     if (job_count >= MAXJOBS) {
         printf("Job list is full\n");
         return;
     }
     struct job *new_job = &jobs_list[job_count];
-    new_job->job_id = job_count + 1; // Assign job_id before incrementing job_count
+    new_job->job_id = job_count + 1;
     new_job->pid = pid;
     new_job->is_running = 1;
-    struct execcmd* ecmd = (struct execcmd*)cmd;
-    strcpy(new_job->cmd, ecmd->argv[0]);
-    job_count++; // Increment job_count after assigning job_id
+    strcpy(new_job->cmd, cmd_str);
+    job_count++;
     printf("[%d] %d\n", new_job->job_id, new_job->pid);
 }
 
