@@ -207,7 +207,7 @@ consoleintr(int c)
 
       struct proc *p;
       for(p = proc; p < &proc[NPROC]; p++) {
-        if(p->pid != 1 && p->pid != 2 ){
+        if(p->pid == fg_pid){
           p->killed=1;
           kill(fg_pid);  // Send a kill signal to the process
           break;

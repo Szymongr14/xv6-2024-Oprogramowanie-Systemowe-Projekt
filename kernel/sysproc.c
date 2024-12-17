@@ -139,8 +139,6 @@ sys_setfgpid(void)
 {
   int pid;
   argint(0, &pid);
-    return -1;
-
   fg_pid = pid;  // Update the global foreground process ID
   return 0;      // Return success
 }

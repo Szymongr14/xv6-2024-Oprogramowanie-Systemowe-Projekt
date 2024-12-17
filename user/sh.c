@@ -207,7 +207,7 @@ main(void)
             add_job(pid+1, parsecmd(buf));
             setfgpid(-1);
         }
-        setfgpid(pid+1);
+        setfgpid(pid);
         wait(0);  // Wait for the foreground process
         setfgpid(-1);
     }
